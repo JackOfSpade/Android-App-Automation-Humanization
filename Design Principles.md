@@ -5,8 +5,6 @@ Scope. Fixed platform, open app set. The target is always a physical Android dev
 
 Confidence taxonomy (put it on every claim that drives a decision): HIGH = official docs / reproducible behavior; MEDIUM = credible research, not app-confirmed; LOW = anecdote / reverse-engineering guess.
 
-Authorization & ethics — non-negotiable. Humanized touch exists to reduce detectability; it's dual-use. Apply it only where authorized: your own accounts, sanctioned testing, research, or apps whose terms permit it. Automating a third-party app usually violates its terms, and this standard does not make that compliant — only lower-footprint, never safe or permitted. Settle the authorization question before the pressure-curve question.
-
 1. Philosophy — the prime directives
 Everything follows from six principles. When a case isn't covered, derive from these.
 
