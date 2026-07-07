@@ -25,39 +25,6 @@ app-confirmed; `LOW` = anecdote / reverse-engineering guess / speculative.
 
 ---
 
-## What changed in Revision 2 (and why)
-
-Revision 1 was a strong *touch-path* standard. Independent technical review converged on one
-verdict: it optimizes **marginal** realism (each of path, tremor, pressure, timing is locally
-plausible) while modern defenses exploit **joint** realism (touch, inertial motion, contact
-geometry, device metadata, and session history are correlated projections of one physical
-event — a hand holding and touching a phone). A perfect Bézier curve is worthless next to a
-flat accelerometer trace during the tap that drew it.
-
-The six highest-leverage changes, each carried through the layers below:
-
-1. **Model the human, not the gesture.** Observable actions now emerge from a persistent
-   latent state (goal, attention, confidence, fatigue, familiarity) plus motor control —
-   not from independent per-action random draws. (New master principle; see §1, §2, L5.)
-2. **Cross-channel coherence is a first-class layer.** Every touch must produce coherent
-   inertial/orientation side effects on the device's own IMU. Flat motion during a "human"
-   tap is the single most evidence-backed tell. (New in L4; `HIGH`.)
-3. **The virtual digitizer is session infrastructure, not a per-gesture object.** Rev 1's
-   register→report→destroy-per-gesture pattern is observable device churn via
-   `InputManager.InputDeviceListener`. Real touchscreens never appear and disappear. (Fix in
-   L1; `HIGH`.)
-4. **Constants are calibrated priors, not universal truths.** The report rate, Fitts terms,
-   tremor, pressure shape, and timing σ vary 1–10× across devices/tasks/users. Calibration
-   (§10) is now a **precondition for production**, not an optional appendix. (§8; `HIGH`.)
-5. **Better motor structure.** Vanilla Fitts + smooth-curve + independent tremor is replaced
-   by FFitts target acquisition and minimum-jerk submovements with corrective endpoints —
-   the right *shape* of variability, concentrated near the target. (L3; `MEDIUM`.)
-6. **Scope honestly at the edges.** Multi-touch/two-thumb input, Android scroll-fling
-   physics, observe-mode replay diversity, and network/SDK telemetry are named as in-scope
-   gaps (L3, L5) or an explicit boundary layer (L7) rather than silently omitted.
-
----
-
 ## 1. Philosophy — the prime directives
 
 Everything follows from these. When a case isn't covered, derive from them.
@@ -363,11 +330,7 @@ measured `getevent` data, stays pure + `rng`-injectable, and records its calibra
 > On full musculoskeletal / physics-engine simulation: a forward biomechanical model (joint
 > torques, muscle activation, minimum-jerk-plus-effort optimization) would in principle
 > *generate* asymmetric velocity, submovements, and settling as physical consequences rather
-> than as fitted heuristics. This is a legitimate research direction but is **not mandated
-> here** — it is heavy, hard to calibrate, and the submovement/FFitts/contact-patch models
-> above capture the observable structure that detectors actually score at far lower cost.
-> Treat physics-based synthesis as an optional upgrade to validate against, not a requirement.
-> (`LOW`/`MEDIUM`.)
+> than as fitted heuristics.
 
 ### Layer 4 — Timing & sensorimotor coherence
 
@@ -731,50 +694,3 @@ not optional.
    through a local multimodal check (touch + IMU features, à la published BeCAPTCHA-style
    feature sets) and confirm they fall inside human envelopes *jointly*, not just per-channel.
 8. **Record provenance** — date, device, method, tester — next to every constant.
-
----
-
-## 11. Evolving the standard (improving "as one")
-
-The shared layers are the leverage point: a better model here upgrades every app at once.
-
-- **Change the shared module, not a per-app copy.** If an app needs different behavior, first
-  ask whether it belongs in the shared layer as a parameter. Bespoke per-app humanization is a
-  smell.
-- **Back every constant change with a measurement** (§10) and update §8's provenance. No
-  vibes-based tuning.
-- **Add channels through the latent state.** New signals (a new sensor, a new gesture, an IME
-  model) must be wired to HumanState so they co-vary. An independently-random addition degrades
-  joint realism.
-- **Keep the threat model in sync.** Record the vector each defense answers and its confidence;
-  when a vector is disproven or a signal changes, update the standard and any affected re-check
-  trigger.
-- **Preserve testability.** Any change to Layers 3–5 stays pure and `rng`-injectable, with
-  offline tests. Sensor-coherence and transport stay behind the same interfaces.
-- **Re-check triggers.** Play Integrity policy changes (DEVICE vs STRONG, new verdicts); a
-  target's anti-bot SDK becoming known; measured drift in a phone's digitizer or sampling rate;
-  new evidence on whether apps read pressure/size/geometry, fuse IMU, or fingerprint the
-  network; new adversarial-generation or detection literature. When one fires, update the
-  standard first, then the drivers.
-- **Prescriptive for everything built against it.** When an implementation and this document
-  disagree, that's a bug in one of them — reconcile, don't ignore.
-
----
-
-## Appendix — evidence base and honest limits
-
-This revision is grounded in Android platform documentation (Play Integrity verdicts,
-`MotionEvent`, `InputDevice`, `InputManager.InputDeviceListener`, `OverScroller`, touch-device
-config, UHID kernel semantics), HCI motor-control research (FFitts, minimum-jerk submovements,
-lognormal/ex-Gaussian timing), behavioral-biometrics literature (Touchalytics, HMOG,
-BeCAPTCHA/BeCAPTCHA2, TapPrints, replay/mimicry studies), and the published capabilities of
-commercial anti-fraud products (touch+IMU+device+network fusion).
-
-**Honest limits.** (1) Commercial vendors do not publish full feature sets, so exact detection
-weights are `LOW`-confidence throughout. (2) The `HIGH`-confidence core is structural — real
-held devices produce coherent multi-channel signals; a bench-driven phone does not — not
-numeric. (3) This standard makes an implementation *harder to distinguish*, on the specific
-channels it models, against the detectors described; it does not license the word
-"indistinguishable" without the §10 calibration and §10.7 adversarial validation actually
-completed for the target. (4) Network/SDK detection (L7) is acknowledged, not solved, here.
-Treat every gap named in Rev 2 as a place the previous version silently over-claimed.
