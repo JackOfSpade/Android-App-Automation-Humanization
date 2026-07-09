@@ -1,0 +1,59 @@
+name: CI
+
+# This repo has no application code and no test suite: there is no
+# Android/Kotlin/Java app anywhere (despite the repo name), no package
+# manifest of any kind, and no test/ / *.bats / *_test.* files. The only real
+# logic in the repo is scripts/auto_merge_decision.sh (sourced by
+# .github/workflows/auto-merge-to-main.yml, which gates merges to main on
+# THIS workflow going green) plus that workflow's own YAML.
+#
+# There is no compiler/package manager, so there is no traditional "build" or
+# "test" step to run here. The closest genuine analogs — and what this
+# workflow actually runs — are:
+#   - `bash -n` syntax-checking every shell script
+#   - `shellcheck` static analysis on every shell script (catches real
+#     quoting/globbing/word-splitting bugs, e.g. in the git/gh piping that
+#     auto_merge_decision.sh and auto-merge-to-main.yml rely on)
+#   - `actionlint` on every workflow YAML file (catches Actions-schema
+#     mistakes: bad `permissions:`, malformed `workflow_run` triggers, etc.)
+#
+# This is real signal, not a placeholder that always passes regardless of
+# correctness: shellcheck and actionlint both fail the job on genuine
+# findings, and both currently pass cleanly against this repo's actual files.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Shell + workflow static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n (syntax check all shell scripts)
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r -d '' f; do
+            echo "bash -n $f"
+            bash -n "$f" || status=1
+          done < <(find . -name '*.sh' -not -path './.git/*' -print0)
+          exit "$status"
+
+      - name: shellcheck (static analysis, pre-installed on ubuntu-latest)
+        run: |
+          set -euo pipefail
+          shellcheck --version
+          find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 shellcheck
+
+      - name: actionlint (GitHub Actions workflow lint)
+        run: |
+          set -euo pipefail
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
