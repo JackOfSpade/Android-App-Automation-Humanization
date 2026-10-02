@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: bash -n (syntax check all shell scripts)
         run: |
@@ -58,6 +58,6 @@ jobs:
           find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 shellcheck -x --source-path=SCRIPTDIR
 
       - name: actionlint (GitHub Actions workflow lint)
-        uses: docker://rhysd/actionlint:1.7.7
+        uses: docker://rhysd/actionlint:1.7.7@sha256:1d74bfc9fd1963af8f89a7c22afaaafd42f49aad711a09951d02cb996398f61d # 1.7.7
         with:
           args: -color
