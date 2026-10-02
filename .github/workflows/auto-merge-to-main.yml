@@ -134,4 +134,14 @@ jobs:
             exit 0
           fi
 
-          echo "Merged branches are intentionally retained for explicit human review."
+          # Delete each merged branch ONLY after re-confirming its current remote
+          # tip is fully contained in the new main, so a commit pushed during the
+          # merge window is never deleted unmerged — it's left for the next run.
+          for br in $merged_branches; do
+            git fetch origin "$br" >/dev/null 2>&1 || continue
+            if is_ancestor_of "origin/$br" main; then
+              git push origin --delete "$br" || true
+            else
+              echo "::warning::$br advanced during the merge; not deleting (next run merges it)."
+            fi
+          done
